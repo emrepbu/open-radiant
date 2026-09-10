@@ -517,6 +517,8 @@ setTimeout(() => {
                     {  app.ports.switchCoverProductVisibility.send(
                         { layer: layerIndex, isProductShown });
                     }
+                , changeCoverText : (layer, text) =>
+                    { app.ports.changeCoverText.send({ layer, ...text }); }
                 , resize: (presetCode) =>
                     { console.log(presetCode);
                       app.ports.resize.send({
@@ -652,6 +654,7 @@ setTimeout(() => {
     let panelsHidden = false;
 
     document.addEventListener('keydown', (event) => {
+        if (event.target.closest('input, textarea, select, [contenteditable]')) return;
         if (event.keyCode == 32) {
             const overlayPanels = document.querySelectorAll('.hide-on-space');
             for (let i = 0; i < overlayPanels.length; i++) {
@@ -662,5 +665,4 @@ setTimeout(() => {
     });
 
 }, 100);
-
 

@@ -52,6 +52,30 @@ See `./package.json` and `Dockerfile` for
 
 ## Navigation
 
+### Custom title and subtitle
+
+Open the **Cover** panel and enter a **Title** and **Subtitle**. The preview
+updates while typing or pasting, and long text wraps automatically. Adjust
+**Title size** and **Subtitle size** separately; values are relative to a
+1200 × 630 canvas and scale with the selected output size.
+
+Custom text replaces the centered product SVG. Leave both fields empty to
+use the existing `assets/*-text.svg` image, controlled by **Product title**.
+The text overlay lets mouse interaction pass through to the animation.
+
+HTML5 exports store the text and sizes in the cover layer of `scene.js`.
+Unicode text, including Turkish characters, is supported in HTML5 and PNG
+exports. Older scenes without these fields still load with the original SVG.
+
+After changing the player, rebuild both bundles before exporting HTML5 so
+the ZIP includes the updated renderer. For the existing Webpack 4 setup on
+Node 17 and newer, use:
+
+```sh
+NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production npm run build:player
+NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production npm run build
+```
+
 ### URL format:
 
 ```

@@ -47,12 +47,17 @@ def =
 
 type alias Model =
     { productShown : Bool
+    , heading : String
+    , subheading : String
+    , headingSize : Float
+    , subheadingSize : Float
     }
 
 
 type Msg
     = HideProduct
     | ShowProduct
+    | ChangeText String String Float Float
 
 
 type Scale = Scale Float
@@ -71,6 +76,10 @@ scaleFactor = 0.1
 init : Model
 init =
     { productShown = True
+    , heading = ""
+    , subheading = ""
+    , headingSize = 64
+    , subheadingSize = 28
     }
 
 
@@ -81,6 +90,15 @@ update index ctx msg model =
             ( { model | productShown = True }, Cmd.none )
         HideProduct ->
             ( { model | productShown = False }, Cmd.none )
+        ChangeText heading subheading headingSize subheadingSize ->
+            ( { model
+                | heading = heading
+                , subheading = subheading
+                , headingSize = clamp 16 120 headingSize
+                , subheadingSize = clamp 12 64 subheadingSize
+              }
+            , Cmd.none
+            )
 
 
 view : Index -> Context -> ( Maybe Html.Blend, Opacity ) -> Model -> Html Msg
@@ -93,9 +111,13 @@ view idx ctx ( maybeBlend, opacity ) model =
         centerY = (toFloat h / 2) - toFloat y
         logoX = toFloat w - toFloat x - 0.1 * toFloat h
         logoY = toFloat h - toFloat y - 0.1 * toFloat h
+        hasCustomText =
+            not (String.isEmpty (String.trim model.heading))
+                || not (String.isEmpty (String.trim model.subheading))
     in
         div
             [ class "cover-layer"
+            , style "pointer-events" "none"
             --, style "mix-blend-mode" <| Blend.encode blend
             , style "position" "absolute"
             , style "top" "0px"
@@ -110,7 +132,9 @@ view idx ctx ( maybeBlend, opacity ) model =
             (ctx.mode == Production)
             || (ctx.mode == Player)
             || (ctx.mode == TronUi Production) then
-            [ if model.productShown then
+            [ if hasCustomText then
+                coverText ctx ( centerX, centerY ) (Maybe.withDefault Blend.Normal maybeBlend) opacity model
+              else if model.productShown then
                 div []
                     [ productName
                         ctx.product
@@ -146,7 +170,57 @@ subscribe ctx model =
                 else
                     ( makeIndex layer, HideProduct )
             )
+        , changeCoverText
+            (\{ layer, heading, subheading, headingSize, subheadingSize } ->
+                ( makeIndex layer, ChangeText heading subheading headingSize subheadingSize )
+            )
         ]
+
+
+coverText : Context -> ( Float, Float ) -> Html.Blend -> Opacity -> Model -> Html a
+coverText ctx ( centerX, centerY ) blend (Opacity opacity) model =
+    let
+        ( width, height ) = ctx.size
+        scale = min (toFloat width / 1200) (toFloat height / 630)
+        px n = String.fromFloat n ++ "px"
+        line className fontSize weight value =
+            div
+                [ class className
+                , style "font-size" (px (fontSize * scale))
+                , style "font-weight" weight
+                , style "line-height" "1.2"
+                ]
+                [ text value ]
+    in
+    div
+        [ class "cover-custom-text"
+        , style "position" "absolute"
+        , style "left" (px centerX)
+        , style "top" (px centerY)
+        , style "transform" "translate(-50%, -50%)"
+        , style "width" (px (toFloat width * 0.82))
+        , style "display" "flex"
+        , style "flex-direction" "column"
+        , style "gap" (px (20 * scale))
+        , style "text-align" "center"
+        , style "font-family" "Arial, Helvetica, sans-serif"
+        , style "color" "white"
+        , style "mix-blend-mode" (Blend.encode blend)
+        , style "opacity" (String.fromFloat opacity)
+        , style "white-space" "pre-wrap"
+        , style "overflow-wrap" "anywhere"
+        , style "text-shadow" "0 2px 12px rgba(0, 0, 0, 0.35)"
+        ]
+        ( [ if String.isEmpty (String.trim model.heading) then
+                Nothing
+            else
+                Just (line "cover-heading" model.headingSize "700" model.heading)
+          , if String.isEmpty (String.trim model.subheading) then
+                Nothing
+            else
+                Just (line "cover-subheading" model.subheadingSize "400" model.subheading)
+          ] |> List.filterMap identity
+        )
 
 
 productName : Product -> ( Float, Float ) -> Html.Blend -> Opacity -> Scale -> Html a
@@ -290,21 +364,35 @@ encode : Context -> Model -> E.Value
 encode ctx model =
     E.object
         [ ( "productShown", E.bool model.productShown )
+        , ( "heading", E.string model.heading )
+        , ( "subheading", E.string model.subheading )
+        , ( "headingSize", E.float model.headingSize )
+        , ( "subheadingSize", E.float model.subheadingSize )
         ]
 
 
 decode : Context -> D.Decoder Model
 decode ctx =
-    D.map
-        (\productShown ->
-            { productShown = productShown
-            }
-        )
+    D.map5 Model
         (D.field "productShown" D.bool)
+        (D.oneOf [ D.field "heading" D.string, D.succeed init.heading ])
+        (D.oneOf [ D.field "subheading" D.string, D.succeed init.subheading ])
+        (D.oneOf [ D.field "headingSize" D.float, D.succeed init.headingSize ])
+        (D.oneOf [ D.field "subheadingSize" D.float, D.succeed init.subheadingSize ])
 
 
 port switchCoverProductVisibility :
     ( { layer : Layer.JsIndex
       , isProductShown : Bool
+      }
+    -> msg) -> Sub msg
+
+
+port changeCoverText :
+    ( { layer : Layer.JsIndex
+      , heading : String
+      , subheading : String
+      , headingSize : Float
+      , subheadingSize : Float
       }
     -> msg) -> Sub msg

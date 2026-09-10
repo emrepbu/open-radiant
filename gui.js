@@ -106,6 +106,10 @@ const Config = function(layers, defaults, constants, funcs, randomize) {
 
       if (is.cover(layer)) {
         this['productShown'+index] = !!layer.model.productShown;
+        this['heading'+index] = layer.model.heading || '';
+        this['subheading'+index] = layer.model.subheading || '';
+        this['headingSize'+index] = layer.model.headingSize || 64;
+        this['subheadingSize'+index] = layer.model.subheadingSize || 28;
       }
 
       if (is.fluid(layer) || is.nativeMetaballs(layer)) {
@@ -365,8 +369,34 @@ function start(document, model, constants, funcs) {
 
       if (is.cover(layer)) {
         const productVisibilitySwitch =
-          folder.add(config, 'productShown' + index).name('title');
+          folder.add(config, 'productShown' + index).name('Product title');
         productVisibilitySwitch.onFinishChange(funcs.switchCoverProductVisibility(index));
+        const updateCoverText = () => funcs.changeCoverText(index, {
+          heading: config['heading'+index],
+          subheading: config['subheading'+index],
+          headingSize: config['headingSize'+index],
+          subheadingSize: config['subheadingSize'+index]
+        });
+        const addTextControl = (property, label, min, max) => {
+          const numeric = typeof config[property + index] === 'number';
+          let control = folder.add(config, property + index).name(label);
+          if (numeric) control = control.min(min).max(max).step(1);
+          const input = control.domElement.querySelector('input');
+          input.setAttribute('aria-label', label);
+          control.onChange(updateCoverText);
+          // dat.gui listens to keyup/change; input also covers paste and IME.
+          input.addEventListener('input', () => {
+            const value = numeric ? Number(input.value) : input.value;
+            if (numeric && (!input.value.trim() || !Number.isFinite(value))) return;
+            control.setValue(value);
+          });
+          return control;
+        };
+        addTextControl('heading', 'Title');
+        addTextControl('subheading', 'Subtitle');
+        addTextControl('headingSize', 'Title size', 16, 120);
+        addTextControl('subheadingSize', 'Subtitle size', 12, 64);
+        folder.open();
       }
       if (is.fluid(layer) || is.nativeMetaballs(layer)) {
         folder.add(config, 'bang' + index).name('bang');
@@ -429,7 +459,7 @@ function start(document, model, constants, funcs) {
       //const index = layers.length - 1 - revIndex;
       //const folder = gui.addFolder('Layer ' + index + ' (' + layer.kind + ')');
       // const folder = gui.addFolder(layer.def.toLowerCase() + ' (' + index + ')');
-      const folder = gui.addFolder(layersNames[index]);
+      const folder = gui.addFolder(is.cover(layer) ? 'Cover' : layersNames[index]);
 
       addLayerProps(folder, config, layer, index);
       if (layer.king == 'webgl') {
@@ -446,6 +476,7 @@ function start(document, model, constants, funcs) {
     //update(gui);
 
     document.addEventListener('keydown', (event) => {
+        if (event.target.closest('input, textarea, select, [contenteditable]')) return;
         if (event.keyCode == 32) {
             if (guiHidden) {
               document.querySelectorAll('.dg')[0].style.display = 'block';

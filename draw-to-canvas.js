@@ -21,11 +21,16 @@ const htmlToCanvas = (selector, canvas, width, height, whenDone) => {
     });
     image.setAttribute('crossOrigin', 'anonymous');
     //const svg = new Blob([data], {type: 'image/svg+xml;charset=utf-8'});
-    const url = 'data:image/svg+xml;base64,' + btoa(data);
+    // Preserve Turkish characters and other Unicode text in PNG exports.
+    const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(data);
     //const url = URL.createObjectURL(svg);
     image.addEventListener('load', () => {
         URL.revokeObjectURL(url);
+        context.save();
+        context.globalAlpha = 1;
+        context.globalCompositeOperation = 'source-over';
         context.drawImage(image, 0, 0);
+        context.restore();
         if (whenDone) whenDone(canvas);
     }, false);
     image.src = url;
@@ -48,12 +53,8 @@ const svgToCanvas = (selector, canvas, width, height, whenDone) => {
     const image = new Image();
     image.setAttribute('crossOrigin', 'anonymous');
 
-    // make it base64
-    const svg64 = btoa(xml);
-    const b64Start = 'data:image/svg+xml;base64,';
-
-    // prepend a "header"
-    const image64 = b64Start + svg64;
+    // Keep Unicode text intact in the SVG data URL.
+    const image64 = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
 
     // set it as the source of the img element
     image.addEventListener('load', () => {
