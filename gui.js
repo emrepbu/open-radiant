@@ -106,6 +106,7 @@ const Config = function(layers, defaults, constants, funcs, randomize) {
 
       if (is.cover(layer)) {
         this['productShown'+index] = !!layer.model.productShown;
+        this['logoShown'+index] = layer.model.logoShown !== false;
         this['heading'+index] = layer.model.heading || '';
         this['subheading'+index] = layer.model.subheading || '';
         this['headingSize'+index] = layer.model.headingSize || 64;
@@ -371,6 +372,9 @@ function start(document, model, constants, funcs) {
         const productVisibilitySwitch =
           folder.add(config, 'productShown' + index).name('Product title');
         productVisibilitySwitch.onFinishChange(funcs.switchCoverProductVisibility(index));
+        const logoVisibilitySwitch = folder.add(config, 'logoShown' + index).name('Logo visible');
+        logoVisibilitySwitch.domElement.querySelector('input').setAttribute('aria-label', 'Logo visible');
+        logoVisibilitySwitch.onChange(funcs.switchCoverLogoVisibility(index));
         const updateCoverText = () => funcs.changeCoverText(index, {
           heading: config['heading'+index],
           subheading: config['subheading'+index],

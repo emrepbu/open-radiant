@@ -1,3 +1,4 @@
+require('./cover-fonts.js').install();
 const buildFSS = require('./fss.js');
 const buildGradients = require('./gradients.js');
 const nativeMetaballs = require('./native-metaballs.js');

@@ -1,15 +1,20 @@
-const htmlToCanvas = (selector, canvas, width, height, whenDone) => {
+const coverFonts = require('./cover-fonts.js');
+
+const htmlToCanvas = async (selector, canvas, width, height, whenDone) => {
     const node = document.querySelector(selector);
     if (!node) {
         console.warn('no element with selector `' + selector + '` was found');
         if (whenDone) whenDone(canvas);
         return;
     }
+    const hasCoverText = !!node.querySelector('.cover-custom-text');
+    if (hasCoverText) await coverFonts.ready();
     const context = canvas.getContext('2d');
     const data =
         '<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'px" height="'+height+'px">' +
               '<foreignObject width="100%" height="100%">' +
                   '<div xmlns="http://www.w3.org/1999/xhtml">' +
+                      (hasCoverText ? '<style>' + coverFonts.css + '</style>' : '') +
                       node.innerHTML +
                   '</div>' +
               '</foreignObject>' +

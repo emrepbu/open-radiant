@@ -63,6 +63,18 @@ Custom text replaces the centered product SVG. Leave both fields empty to
 use the existing `assets/*-text.svg` image, controlled by **Product title**.
 The text overlay lets mouse interaction pass through to the animation.
 
+The title uses **JetBrains Mono Bold** and the subtitle uses **JetBrains Mono
+Regular**. The official v2.304 WOFF2 files are embedded unchanged in
+`assets/fonts/jetbrains-mono.css` and bundled with both the editor and player.
+No installed font, CDN, or font request is needed by the exported animation.
+PNG export embeds the same font data and waits for the fonts before rendering.
+Source: [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono/tree/v2.304).
+The included SIL Open Font License is also added to the HTML5 ZIP.
+
+Use **Logo visible** to show or hide the lower-right JetBrains logo independently
+of the title and subtitle. This setting is saved in the scene and respected by
+both HTML5 and PNG exports. Older scenes keep the logo visible by default.
+
 HTML5 exports store the text and sizes in the cover layer of `scene.js`.
 Unicode text, including Turkish characters, is supported in HTML5 and PNG
 exports. Older scenes without these fields still load with the original SVG.

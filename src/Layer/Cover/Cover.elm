@@ -47,6 +47,7 @@ def =
 
 type alias Model =
     { productShown : Bool
+    , logoShown : Bool
     , heading : String
     , subheading : String
     , headingSize : Float
@@ -58,6 +59,7 @@ type Msg
     = HideProduct
     | ShowProduct
     | ChangeText String String Float Float
+    | SetLogoVisibility Bool
 
 
 type Scale = Scale Float
@@ -76,6 +78,7 @@ scaleFactor = 0.1
 init : Model
 init =
     { productShown = True
+    , logoShown = True
     , heading = ""
     , subheading = ""
     , headingSize = 64
@@ -90,6 +93,8 @@ update index ctx msg model =
             ( { model | productShown = True }, Cmd.none )
         HideProduct ->
             ( { model | productShown = False }, Cmd.none )
+        SetLogoVisibility isShown ->
+            ( { model | logoShown = isShown }, Cmd.none )
         ChangeText heading subheading headingSize subheadingSize ->
             ( { model
                 | heading = heading
@@ -150,7 +155,10 @@ view idx ctx ( maybeBlend, opacity ) model =
                     --     ( Scale <| 0.8 * scale )
                     ]
               else text ""
-            , logo ( logoX, logoY ) Blend.Normal ( Scale <| 0.6 * scale )
+            , if model.logoShown then
+                logo ( logoX, logoY ) Blend.Normal ( Scale <| 0.6 * scale )
+              else
+                text ""
             ]
           else
             [
@@ -173,6 +181,10 @@ subscribe ctx model =
         , changeCoverText
             (\{ layer, heading, subheading, headingSize, subheadingSize } ->
                 ( makeIndex layer, ChangeText heading subheading headingSize subheadingSize )
+            )
+        , switchCoverLogoVisibility
+            (\{ layer, isLogoShown } ->
+                ( makeIndex layer, SetLogoVisibility isLogoShown )
             )
         ]
 
@@ -203,7 +215,7 @@ coverText ctx ( centerX, centerY ) blend (Opacity opacity) model =
         , style "flex-direction" "column"
         , style "gap" (px (20 * scale))
         , style "text-align" "center"
-        , style "font-family" "Arial, Helvetica, sans-serif"
+        , style "font-family" "'JetBrains Mono', monospace"
         , style "color" "white"
         , style "mix-blend-mode" (Blend.encode blend)
         , style "opacity" (String.fromFloat opacity)
@@ -364,6 +376,7 @@ encode : Context -> Model -> E.Value
 encode ctx model =
     E.object
         [ ( "productShown", E.bool model.productShown )
+        , ( "logoShown", E.bool model.logoShown )
         , ( "heading", E.string model.heading )
         , ( "subheading", E.string model.subheading )
         , ( "headingSize", E.float model.headingSize )
@@ -373,8 +386,9 @@ encode ctx model =
 
 decode : Context -> D.Decoder Model
 decode ctx =
-    D.map5 Model
+    D.map6 Model
         (D.field "productShown" D.bool)
+        (D.oneOf [ D.field "logoShown" D.bool, D.succeed init.logoShown ])
         (D.oneOf [ D.field "heading" D.string, D.succeed init.heading ])
         (D.oneOf [ D.field "subheading" D.string, D.succeed init.subheading ])
         (D.oneOf [ D.field "headingSize" D.float, D.succeed init.headingSize ])
@@ -394,5 +408,12 @@ port changeCoverText :
       , subheading : String
       , headingSize : Float
       , subheadingSize : Float
+      }
+    -> msg) -> Sub msg
+
+
+port switchCoverLogoVisibility :
+    ( { layer : Layer.JsIndex
+      , isLogoShown : Bool
       }
     -> msg) -> Sub msg

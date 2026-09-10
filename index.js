@@ -4,6 +4,7 @@
 // include styles
 require('./index.css');
 require('./src/Gui/Gui.css');
+require('./cover-fonts.js').install();
 
 const deepClone = require('./deep-clone.js');
 const randomize = require('./randomize.js');
@@ -147,6 +148,7 @@ const exportZip_ = (app, exportedState) => {
                                , path : './assets/' + fileName + '.svg'
                                };
                     })
+                    .concat([{ name: 'fonts/OFL.txt', path: './assets/fonts/OFL.txt' }])
                     .map(waitForContent);
             Promise.all(assetPromises)
                    .then(files =>
@@ -225,8 +227,9 @@ const savePng = (hiddenLink, { size, product, background, layers }) => {
             return [ ...prev
                    // , { selector : '#layer-' + index + ' .text-layer--slogan', collect : 'html' }
                    , { selector : '#layer-' + index, collect : 'html' }
-                   , { selector : '#layer-' + index + ' .product-name-layer', collect : 'stored' }
-                   , { selector : '#layer-' + index + ' .logo-layer', collect : 'stored' }
+                   , ...['.product-name-layer', '.logo-layer']
+                        .map(selector => ({ selector: '#layer-' + index + ' ' + selector, collect: 'stored' }))
+                        .filter(item => document.querySelector(item.selector))
                    ];
         }
         if (kind == 'webgl' || kind == 'js') {
@@ -519,6 +522,8 @@ setTimeout(() => {
                     }
                 , changeCoverText : (layer, text) =>
                     { app.ports.changeCoverText.send({ layer, ...text }); }
+                , switchCoverLogoVisibility : layer => isLogoShown =>
+                    { app.ports.switchCoverLogoVisibility.send({ layer, isLogoShown }); }
                 , resize: (presetCode) =>
                     { console.log(presetCode);
                       app.ports.resize.send({
@@ -665,4 +670,3 @@ setTimeout(() => {
     });
 
 }, 100);
-
