@@ -201,6 +201,8 @@ initialLayers mode =
             |> List.filter (\{ fromDef } ->
                 case ( fromDef, mode ) of
                     ( "cover", Ads ) -> False
+                    -- Player imports the saved cover before rendering any SVGs.
+                    ( "cover", Player ) -> False
                     _ -> True
             )
 
@@ -371,6 +373,11 @@ update msg model =
         ExportZip ->
             ( model
             , model |> IE.encodeToString |> exportZip_
+            )
+
+        ExportBlogZip ->
+            ( model
+            , model |> IE.encodeToString |> exportBlogZip_
             )
 
         Store ->
@@ -781,6 +788,11 @@ view model =
                     , Events.onClick ExportZip, value "|> HTML5" ]
                     [ text "Export to html5.zip" ]
                 , input
+                    [ type_ "button", class "export_html5"
+                    , H.title "Download a lightweight cover for a blog with shared Open Radiant files"
+                    , Events.onClick ExportBlogZip, value "|> HTML5 (Blog)" ]
+                    [ text "Export HTML5 with shared blog files" ]
+                , input
                     [ type_ "button", class "export_png"
                     , Events.onClick SavePng, value "|> PNG" ]
                     [ text "Export to PNG" ]
@@ -994,6 +1006,8 @@ port modeChanged : String -> Cmd msg
 port export_ : String -> Cmd msg
 
 port exportZip_ : String -> Cmd msg
+
+port exportBlogZip_ : String -> Cmd msg
 
 port triggerSavePng :
     { size : ( Int, Int )

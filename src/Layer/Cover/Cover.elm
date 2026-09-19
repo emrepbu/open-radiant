@@ -138,7 +138,7 @@ view idx ctx ( maybeBlend, opacity ) model =
             || (ctx.mode == Player)
             || (ctx.mode == TronUi Production) then
             [ if hasCustomText then
-                coverText ctx ( centerX, centerY ) (Maybe.withDefault Blend.Normal maybeBlend) opacity model
+                coverText ctx ( centerX, centerY ) model
               else if model.productShown then
                 div []
                     [ productName
@@ -189,8 +189,9 @@ subscribe ctx model =
         ]
 
 
-coverText : Context -> ( Float, Float ) -> Html.Blend -> Opacity -> Model -> Html a
-coverText ctx ( centerX, centerY ) blend (Opacity opacity) model =
+-- Custom text stays readable when I Feel Lucky randomizes the artwork stats.
+coverText : Context -> ( Float, Float ) -> Model -> Html a
+coverText ctx ( centerX, centerY ) model =
     let
         ( width, height ) = ctx.size
         scale = min (toFloat width / 1200) (toFloat height / 630)
@@ -217,8 +218,8 @@ coverText ctx ( centerX, centerY ) blend (Opacity opacity) model =
         , style "text-align" "center"
         , style "font-family" "'JetBrains Mono', monospace"
         , style "color" "white"
-        , style "mix-blend-mode" (Blend.encode blend)
-        , style "opacity" (String.fromFloat opacity)
+        , style "mix-blend-mode" "normal"
+        , style "opacity" "1"
         , style "white-space" "pre-wrap"
         , style "overflow-wrap" "anywhere"
         , style "text-shadow" "0 2px 12px rgba(0, 0, 0, 0.35)"

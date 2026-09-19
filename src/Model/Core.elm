@@ -83,6 +83,7 @@ type Msg
     | Import Model
     | Export
     | ExportZip
+    | ExportBlogZip
     | TimeTravel Float
     | BackToNow
     | Pause

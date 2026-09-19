@@ -125,6 +125,8 @@ getSizePresets mode =
             , ( 1536, 864)
             , ( 1440, 900 )
             , ( 1366, 768 )
+            , ( 2400, 1260 )
+            , ( 1200, 630 )
             ] |> List.map (\(w, h) -> Wallpaper w h)
 
 

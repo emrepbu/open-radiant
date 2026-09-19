@@ -62,6 +62,9 @@ updates while typing or pasting, and long text wraps automatically. Adjust
 Custom text replaces the centered product SVG. Leave both fields empty to
 use the existing `assets/*-text.svg` image, controlled by **Product title**.
 The text overlay lets mouse interaction pass through to the animation.
+Custom titles and subtitles stay fully opaque with normal blending, including
+after **i feel lucky**. Random artwork opacity and blend modes do not fade the
+text in the editor, HTML5 player, or PNG export.
 
 The title uses **JetBrains Mono Bold** and the subtitle uses **JetBrains Mono
 Regular**. The official v2.304 WOFF2 files are embedded unchanged in
@@ -73,7 +76,10 @@ The included SIL Open Font License is also added to the HTML5 ZIP.
 
 Use **Logo visible** to show or hide the lower-right JetBrains logo independently
 of the title and subtitle. This setting is saved in the scene and respected by
-both HTML5 and PNG exports. Older scenes keep the logo visible by default.
+both HTML5 and PNG exports. When disabled, the logo is omitted from the
+HTML5 player DOM and `assets/jetbrains.svg` is not added to the ZIP or requested.
+Unused product-title SVGs are also omitted when using custom text or disabling
+**Product title**. Older scenes keep the logo visible by default.
 
 HTML5 exports store the text and sizes in the cover layer of `scene.js`.
 Unicode text, including Turkish characters, is supported in HTML5 and PNG
@@ -87,6 +93,25 @@ Node 17 and newer, use:
 NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production npm run build:player
 NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production npm run build
 ```
+
+### HTML5 export modes
+
+- **HTML5** downloads a standalone ZIP with its player, styles, font license,
+  scene and any visible logo/product SVGs.
+- **HTML5 (Blog)** downloads `index.html`, `scene.js`, and only the SVGs
+  needed by visible logos or product titles (if any). Extract the ZIP
+  into the post's `cover/` folder in `emrepbu.github.io`. The blog supplies
+  the shared player, embedded fonts and styles from `/open-radiant/v1/`.
+  SVGs stay with the cover that uses them; custom text with a hidden logo
+  needs no SVG files.
+  This smaller ZIP needs those files on the same website; it is not a
+  standalone offline export. Hidden logos and unused product SVGs are
+  still never requested.
+
+To update the shared files after rebuilding Open Radiant, run
+`npm run covers:sync -- ../open-radiant` from the blog repository. Commit the
+updated `public/open-radiant/v1/` files with the blog. Keep old runtime
+versions if a future export format introduces a new versioned path.
 
 ### URL format:
 

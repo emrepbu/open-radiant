@@ -11,7 +11,7 @@ const randomize = require('./randomize.js');
 const buildGradients = require('./gradients.js');
 const is = require('./check-layer-type.js');
 const drawToCanvas = require('./draw-to-canvas.js');
-const JSZip = require('jszip');
+const { createHtml5Zip } = require('./export-html5.js');
 const JSZipUtils = require('jszip-utils');
 const FileSaver = require('jszip/vendor/FileSaver');
 const timing = require('./timing.js');
@@ -92,75 +92,25 @@ const export_ = (app, exportedState) => {
     };
 }
 
-const waitForContent = ({ path, name }) => {
-    return new Promise((resolve, reject) => {
-        JSZipUtils.getBinaryContent(path, (err, content) => {
-            if (err) { reject(err); return; }
-            resolve({ path, name, content });
-        });
+const loadExportFile = path => new Promise((resolve, reject) => {
+    JSZipUtils.getBinaryContent(path, (error, content) => {
+        if (error) reject(error);
+        else resolve(content);
     });
-};
+});
 
-const exportZip_ = (app, exportedState) => {
-    const sequenceFiles = function (fileList, handler, filesContent) {
-        const fileListCopy = fileList.concat([]);
-        const nextFilePath = fileListCopy.shift();
-        JSZipUtils.getBinaryContent(
-            nextFilePath, (err, nextFileContent) => {
-                if (err) { throw err; }
-                if (!filesContent) { filesContent = {}; };
-                filesContent[nextFilePath] = nextFileContent;
-                if (fileListCopy.length == 0) {
-                    handler(filesContent);
-                    return;
-                };
-                sequenceFiles(fileListCopy, handler, filesContent);
-            }
-        );
+const exportZip_ = async (app, exportedState, blog = false) => {
+    try {
+        const { source } = export_(app, exportedState);
+        const zip = await createHtml5Zip(source, { blog, loadFile: loadExportFile });
+        const content = await zip.generateAsync({ type: 'blob' });
+        const suffix = blog ? '_html5_blog.zip' : '_html5.zip';
+        FileSaver(content, source.product + suffix);
+    } catch (error) {
+        console.error(error);
+        alert('Failed to create HTML5 ZIP. Please try again.');
     }
-
-    const PATHS =
-        { 'bundle': './player.bundle.js',
-          'html': './index.player.html',
-          'style': './index.css' };
-    const NAMES =
-        { 'bundle': 'player.bundle.js',
-          'html': 'index.html',
-          'style': 'index.css',
-          'scene': 'scene.js' };
-
-    sequenceFiles([ PATHS.bundle, PATHS.html, PATHS.style ],
-        (files) => {
-            const playerBundle = files[PATHS.bundle];
-            const playerHtml = files[PATHS.html];
-            const playerCss = files[PATHS.style];
-            const { json, source }  = export_(app, exportedState);
-            const zip = new JSZip();
-            zip.file(NAMES.bundle, playerBundle, { binary: true });
-            zip.file(NAMES.scene, 'window.jsGenScene = ' + json + ';');
-            zip.file(NAMES.html, playerHtml, { binary: true });
-            zip.file(NAMES.style, playerCss, { binary: true });
-            const assets = zip.folder('assets');
-            const assetPromises =
-                [ source.product + '-text', 'jetbrains' ]
-                    .map(fileName => {
-                        return { name: fileName + '.svg'
-                               , path : './assets/' + fileName + '.svg'
-                               };
-                    })
-                    .concat([{ name: 'fonts/OFL.txt', path: './assets/fonts/OFL.txt' }])
-                    .map(waitForContent);
-            Promise.all(assetPromises)
-                   .then(files =>
-                        files.map(
-                            ({ content, name }) => {
-                                assets.file(name, content, { binary: true }) }
-                        )
-                    )
-                   .then(() => zip.generateAsync({type:"blob"}))
-                   .then(content => new FileSaver(content, source.product + "_html5.zip"));
-        });
-}
+};
 
 const prepareImportExport = () => {
     app.ports.export_.subscribe((exportedState) => {
@@ -169,15 +119,8 @@ const prepareImportExport = () => {
         document.getElementById('export-target').className = 'shown';
         document.getElementById('export-code').value = exportCode;
     });
-    app.ports.exportZip_.subscribe((exportedState) => {
-        try {
-            // console.log('exportedState', exportedState);
-            exportZip_(app, exportedState);
-        } catch(e) {
-            console.error(e);
-            alert('Failed to create .zip');
-        }
-    });
+    app.ports.exportZip_.subscribe(exportedState => exportZip_(app, exportedState));
+    app.ports.exportBlogZip_.subscribe(exportedState => exportZip_(app, exportedState, true));
     // document.getElementById('close-export').addEventListener('click', () => {
     //     document.getElementById('export-target').className = '';
     // });
