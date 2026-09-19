@@ -1,8 +1,8 @@
 const JSZip = require('jszip');
 const coverAssets = require('./export-cover-assets.js');
 
-// Keep this format version in sync with the blog's public/open-radiant/v1/.
-const sharedRuntimePath = '/open-radiant/v1/';
+// Keep this format version in sync with the blog's public/blog-assets/open-radiant/v1/.
+const sharedRuntimePath = '/blog-assets/open-radiant/v1/';
 
 const createHtml5Zip = async (source, { blog = false, loadFile }) => {
     const zip = new JSZip();

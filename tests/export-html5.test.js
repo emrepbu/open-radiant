@@ -22,8 +22,8 @@ test('custom-text blog ZIP contains only its entry and scene, with shared runtim
     assert.deepEqual(files(zip), ['index.html', 'scene.js']);
     const html = await zip.file('index.html').async('string');
     assert.match(html, /src="\.\/scene\.js"/);
-    assert.match(html, /href="\/open-radiant\/v1\/index\.css"/);
-    assert.match(html, /src="\/open-radiant\/v1\/player\.bundle\.js"/);
+    assert.match(html, /href="\/blog-assets\/open-radiant\/v1\/index\.css"/);
+    assert.match(html, /src="\/blog-assets\/open-radiant\/v1\/player\.bundle\.js"/);
     const exported = await exportedScene(zip);
     assert.deepEqual(exported, scene);
     assert.equal(exported.layers[0].model.heading, 'Türkçe başlık');

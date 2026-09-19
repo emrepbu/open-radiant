@@ -101,7 +101,7 @@ NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production npm run build
 - **HTML5 (Blog)** downloads `index.html`, `scene.js`, and only the SVGs
   needed by visible logos or product titles (if any). Extract the ZIP
   into the post's `cover/` folder in `emrepbu.github.io`. The blog supplies
-  the shared player, embedded fonts and styles from `/open-radiant/v1/`.
+  the shared player, embedded fonts and styles from `/blog-assets/open-radiant/v1/`.
   SVGs stay with the cover that uses them; custom text with a hidden logo
   needs no SVG files.
   This smaller ZIP needs those files on the same website; it is not a
@@ -110,7 +110,7 @@ NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production npm run build
 
 To update the shared files after rebuilding Open Radiant, run
 `npm run covers:sync -- ../open-radiant` from the blog repository. Commit the
-updated `public/open-radiant/v1/` files with the blog. Keep old runtime
+updated `public/blog-assets/open-radiant/v1/` files with the blog. Keep old runtime
 versions if a future export format introduces a new versioned path.
 
 ### URL format:
